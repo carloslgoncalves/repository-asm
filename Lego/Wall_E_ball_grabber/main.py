@@ -3,9 +3,10 @@
 import math
 
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import Motor, UltrasonicSensor, GyroSensor
-from pybricks.parameters import Port
-from pybricks.tools import wait, StopWatch
+from pybricks.ev3devices import (Motor, UltrasonicSensor, GyroSensor)
+from pybricks.nxtdevices import UltrasonicSensor as UltSensor
+from pybricks.parameters import Port, Direction, Button
+from pybricks.tools import wait, StopWatch,DataLog
 from pybricks.robotics import DriveBase
 
 # Initialize the EV3 Brick.
@@ -13,12 +14,16 @@ ev3 = EV3Brick()
 
 # Initialize the Ultrasonic Sensor. It is used to detect
 # obstacles as the robot drives around.
+wall_sensor = UltSensor(Port.S3)
 ball_sensor = UltrasonicSensor(Port.S1)
-wall_sensor = UltrasonicSensor(Port.S2)
+
+
+
+gyro=GyroSensor(Port.S4, Direction.COUNTERCLOCKWISE)
 
 # Initialize two motors with default settings on Port B and Port C.
 # These will be the left and right motors of the drive base.
-right_motor = Motor(Port.A)
+right_motor = Motor(Port.B)
 left_motor = Motor(Port.C)
 claw_motor = Motor(Port.D)
 
@@ -29,8 +34,8 @@ currentState = 0
 # move at the correct speed when you give a motor command.
 # The axle track is the distance between the points where the wheels
 # touch the ground.
-robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=149)
-robot.settings(10, 100, 1, 1) #straight_speed, straight_acceleration, turn_rate, turn_acceleration
+robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=111)#149
+robot.settings(100, 100, 100, 100) #straight_speed, straight_acceleration, turn_rate, turn_acceleration
 
 #Defining the bounderies for the claw_motor
 max_claw_angle = 10 #degrees
@@ -47,31 +52,47 @@ ang=0 # atual angle from 0 to 359 degrees anticlockwise
 # Play a sound to tell us when we are ready to start moving
 ev3.speaker.beep()
 
+while Button.CENTER not in ev3.buttons.pressed():
+    wait(100)
+
+
+def inicialise():
+    gyro.reset_angle(0)
+    frst_mesure = wall_sensor.distance()
+    for i in range(4):
+        if frst_mesure<wall_sensor.distance():
+            robot.turn(3)
+        elif frst_mesure>wall_sensor.distance():
+            robot.turn(-3)
+        frst_mesure=wall_sensor.distance()
+
+
 while True:
-    match currentState:
-        case 0:
-            robot.straight(100)
-            #inicialise()
+    if currentState == 0:
+        robot.turn(90)
+        robot.stop()
+        #inicialise()
             
-        case 1:
-            define_target() 
+    elif currentState == 1:
+        define_target() 
             
-        case 2:
-            path_finder()
+    elif currentState == 2:
+        path_finder()
         
-        case 3:
-            map_drive() 
+    elif currentState == 3:
+        map_drive() 
             
-        case 4:
-            target_atcheaved()
+    elif currentState == 4:
+        target_atcheaved()
             
-        case 5:
-            system_reset()
+    elif currentState == 5:
+        system_reset()
     
 
 
 
 def inicialise():
+    gyro.reset_angle(0)
     frst_mesure = wall_sensor.distance()
     robot.turn(3)
     for i in range(4):
