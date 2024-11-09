@@ -48,7 +48,7 @@ max_claw_speed = 1 #degrees/s
 Feald_dimensions=(1100,705)  #x,y in milimeters
 
 ofset_wall_sensor=-60 #ditance weals to wall sensor in mm
-ofset_ball_sensor=+120 #ditance weals to ball sensor in mm
+ofset_ball_sensor=+60 #ditance weals to ball sensor in mm
 
 max_measure= (Feald_dimensions[0]**2+Feald_dimensions[1]**2)**0.5
 
