@@ -1,22 +1,23 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, # type: ignore
+from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, 
                                  InfraredSensor, UltrasonicSensor, GyroSensor)
 from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
-from pybricks.robotics import DriveBase # type: ignore
+from pybricks.robotics import DriveBase 
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from pybricks.nxtdevices import TouchSensor
-from pybricks.bluetooth import BluetoothMailboxClient, TextMailbox
+from pybricks.messaging import BluetoothMailboxClient, TextMailbox
 
-
-# This program requires LEGO EV3 MicroPython v2.0 or higher.
-# Click "Open user guide" on the EV3 extension tab for more information.
-
-
-# Create your objects here.
 ev3 = EV3Brick()
 
+client = BluetoothMailboxClient()
+mailbox = TextMailbox('greeting', client)
+
+server_address = '38:81:D7:4B:0F:3B'
+print("Connecting to server...")
+client.connect(server_address)
+print("Connected to server!")
 
 # Write your program here.
 
@@ -32,6 +33,9 @@ base_motor.control.limits(speed=100, acceleration=200)
 base_switch = TouchSensor(Port.S1)
 Low_end_switch = TouchSensor(Port.S2)
 High_end_switch = TouchSensor(Port.S3)
+
+
+
 
 
 
@@ -61,63 +65,52 @@ gripper_motor.run_target(200, -90)
 wait(2000)
 
 def robot_pick(position):
-    # This function makes the robot base rotate to the indicated
-    # position. There it lowers the elbow, closes the gripper, and
-    # raises the elbow to pick up the object.
 
-    # Rotate to the pick-up position.
+    # Roda para a posição indicada
     base_motor.run_target(30, position)
-    # Lower the arm.
-    elbow_motor.run_target(20, -60)
-    # Close the gripper to grab the wheel stack.
+    # Baixa o braço
+    elbow_motor.run_target(20, -65)
+    # Dechar a garra 
     gripper_motor.run_until_stalled(220, then=Stop.HOLD, duty_limit=50)
-    # Raise the arm to lift the wheel stack.
+    # Levanta o braço
     elbow_motor.run_target(20, 0)
 
 
 def robot_release(position):
-    # This function makes the robot base rotate to the indicated
-    # position. There it lowers the elbow, opens the gripper to
-    # release the object. Then it raises its arm again.
 
-    # Rotate to the drop-off position.
+    # Roda para a posição em que vai largar a bola
     base_motor.run_target(30, position)
-    # Lower the arm to put the wheel stack on the ground.
+    # Baixar um pouco o braço
     elbow_motor.run_target(20, -50)
-    # Open the gripper to release the wheel stack.
+    # Abrir a garra para largar a bola
     gripper_motor.run_target(120, -90)
-    # Raise the arm.
+    # Levantar o braço
     elbow_motor.run_target(20, 0)
 
 
-# Play three beeps to indicate that the initialization is complete.
 for i in range(3):
     ev3.speaker.beep()
     wait(100)
 
-# Define the three destinations for picking up and moving the wheel stacks.
+# Posições
 LEFT = 130
-MIDDLE = 80
+MIDDLE = 167
 RIGHT = 20
 
-client = BluetoothMailboxClient()
-mailbox = TextMailbox('greeting', client)
+message="e"
 
-# Replace '01:23:45:67:89:AB' with the Bluetooth address of the server EV3 brick
-server_address = '01:23:45:67:89:AB'
-print("Connecting to server...")
-client.connect(server_address)
-print("Connected to server!")
 
 # Main loop to receive messages and perform actions
 while True:
-    #Wait for a new message
     mailbox.wait()
     message = mailbox.read()
     print("Received:", message)
-    
-    #Perform an action if the message is "hello"
-    if message == "hello":
+
+    if message=="Bola":
         robot_pick(MIDDLE)
         robot_release(RIGHT)
-        wait(2000)
+        wait(2000)    
+    else:
+        wait(200)
+   
+
