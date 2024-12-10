@@ -6,13 +6,14 @@ const int ledYELLOW = 4;
 const int ledGREEN = 5;
 
 float temperatura;
-int setpoint = 25;
+float setpoint = 25.0;
 
-int ldrValue = 0;
-bool sistemaOperacional = true;
+bool sistemaOperacional = false;
 
 unsigned long previousMillis = 0;
 unsigned long blinkInterval = 0;
+unsigned long serialPreviousMillis = 0;
+const unsigned int serialInterval = 1000;
 bool redLedState = LOW;
 
 void setup() {
@@ -20,12 +21,15 @@ void setup() {
   pinMode(ledRED, OUTPUT);
   pinMode(ledYELLOW, OUTPUT);
   pinMode(ledGREEN, OUTPUT);
+  pinMode(ldrPin, INPUT);
+  pinMode(tempSensorPin, INPUT);
 }
 
 void loop() {
-
+  analogRead(tempSensorPin);
+  delay(10);
   int sensorValue = analogRead(tempSensorPin);
-  temperatura = (sensorValue * 5.0 / 1023.0) * 100.0;
+  temperatura = (sensorValue * 5.0 * 100.0) / 1023.0;
 
   if (!sistemaOperacional) {
     digitalWrite(ledGREEN, LOW);
@@ -37,12 +41,8 @@ void loop() {
     digitalWrite(ledYELLOW, LOW);
 
 
-    Serial.print("Temp: ");
-    Serial.print(temperatura);
-    Serial.print(" | SP: ");
-    Serial.println(setpoint);
 
-    int erro = setpoint - temperatura;
+    float erro = setpoint - temperatura;
     if (erro < 0) {
 
       digitalWrite(ledRED, LOW);
@@ -50,44 +50,64 @@ void loop() {
 
       digitalWrite(ledRED, HIGH);
     } else {
-      blinkInterval = erro * 500;
+      blinkInterval = erro * 1000;
       piscarLed();
     }
-    
-    ldrValue = analogRead(ldrPin);
-    float lightLevel = map(ldrValue, 0, 1023, 100, 0);
-    lightLevel = constrain(lightLevel, 0, 100);
+    analogRead(ldrPin);
+    delay(10);
+    int ldrValue = analogRead(ldrPin);
+    float lightLevel = ldrValue * 100.0 / 1023.0;
+    //lightLevel = constrain(lightLevel, 0, 100);
 
-    Serial.print("LDR Value: ");
-    Serial.print(ldrValue);
-    Serial.print(" | Light Level: ");
-    Serial.print(lightLevel);
-    Serial.println("%");
+    unsigned long currentMillis = millis();
+    if (currentMillis - serialPreviousMillis >= serialInterval) {
+      serialPreviousMillis = currentMillis;
 
-    if (Serial.available() > 0) {
-      String input = Serial.readStringUntil('\n');
-      input.trim();  // Remove espaços em branco
+      Serial.print("Temp: ");
+      Serial.print(temperatura, 2);
+      Serial.print(" | SP: ");
+      Serial.print(setpoint, 1);
 
-      if (input.startsWith("SET")) {
-        setpoint = input.substring(3).toInt();
-        // } else if (input == "LED ON") {
-        //   digitalWrite(ledPin, HIGH);
-        // } else if (input == "LED OFF") {
-        //   digitalWrite(ledPin, LOW);
-        // }
-      }
+      Serial.print(" ; LDR Value: ");
+      Serial.print(ldrValue);
+      Serial.print(" | Light Level: ");
+      Serial.print(lightLevel, 2);
+      Serial.println("%");
     }
-    delay(1000);
   }
+  
+  if (Serial.available() > 0) {
+    String input = Serial.readStringUntil('\n');
+    input.trim();  // Remove espaços em branco
+
+    if (input.startsWith("SET")) {
+      setpoint = input.substring(3).toFloat();
+
+    } else if (input == "DANGER") {
+      sistemaOperacional = false;
+
+    } else if (input == "OK") {
+      sistemaOperacional = true;
+    }
+  }
+  
+  //delay(1000);
 }
+
 
 void piscarLed() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - previousMillis >= blinkInterval) {
+  if (currentMillis - previousMillis >= blinkInterval && redLedState) {
     previousMillis = currentMillis;
 
     redLedState = !redLedState;
     digitalWrite(ledRED, redLedState);
+  } else if (!redLedState && currentMillis - previousMillis >= 1000) {
+    previousMillis = currentMillis;
+
+    redLedState = !redLedState;
+    digitalWrite(ledRED, redLedState);
+    ;
   }
 }
