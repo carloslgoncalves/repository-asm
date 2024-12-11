@@ -31,11 +31,29 @@ void loop() {
   int sensorValue = analogRead(tempSensorPin);
   temperatura = (sensorValue * 5.0 * 100.0) / 1023.0;
 
-  if (!sistemaOperacional) {
+  analogRead(ldrPin);
+  delay(10);
+  int ldrValue = analogRead(ldrPin);
+  float lightLevel = ldrValue * 100.0 / 1023.0;
+
+  if (!sistemaOperacional || temperatura >=470.0 || temperatura<=0.0||ldrValue>=1023||ldrValue<=0) {
     digitalWrite(ledGREEN, LOW);
     digitalWrite(ledRED, LOW);
     digitalWrite(ledYELLOW, HIGH);
-
+    unsigned long currentMillis = millis();
+    if (currentMillis - serialPreviousMillis >= serialInterval) {
+      serialPreviousMillis = currentMillis;
+      
+      if (temperatura >=470.0 || temperatura<=0.0){
+        Serial.println("ERROR1");
+        sistemaOperacional=false;
+      }else if(ldrValue>=1023||ldrValue<=0){
+        Serial.println("ERROR2");
+        sistemaOperacional=false;
+      }else if(!sistemaOperacional){
+        Serial.println("Waiting for connection...");
+      } 
+    }
   } else {
     digitalWrite(ledGREEN, HIGH);
     digitalWrite(ledYELLOW, LOW);
@@ -53,16 +71,11 @@ void loop() {
       blinkInterval = erro * 1000;
       piscarLed();
     }
-    analogRead(ldrPin);
-    delay(10);
-    int ldrValue = analogRead(ldrPin);
-    float lightLevel = ldrValue * 100.0 / 1023.0;
-    //lightLevel = constrain(lightLevel, 0, 100);
-
+    
     unsigned long currentMillis = millis();
     if (currentMillis - serialPreviousMillis >= serialInterval) {
       serialPreviousMillis = currentMillis;
-
+      
       Serial.print("Temp: ");
       Serial.print(temperatura, 2);
       Serial.print(" | SP: ");
