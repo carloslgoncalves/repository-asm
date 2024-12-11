@@ -121,6 +121,6 @@ void piscarLed() {
 
     redLedState = !redLedState;
     digitalWrite(ledRED, redLedState);
-    ;
+    
   }
 }
