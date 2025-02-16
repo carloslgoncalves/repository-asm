@@ -19,7 +19,7 @@ bool sistemaOperacional = false;
 unsigned long previousMillis1 = 0;
 unsigned long previousMillis2 = 0;
 unsigned long previousMillis3 = 0;
-const unsigned long serialInterval = 1000; // Intervalo de envio de dados (de 1 em 1 segundo neste caso)
+const unsigned long serialInterval = 900; // Intervalo de envio de dados (de 1 em 1 segundo neste caso)
 ///LEDs
 bool estadoLedVermelho = LOW;
 const unsigned long tOff = 1000; // Tempo off LED vermelho (1 segundo)
@@ -170,7 +170,7 @@ void envioDados(){
 
       Serial.print(" ; LDR Value: ");
       Serial.print(valorMedidoLDR);
-      Serial.print(" | Light Level: ");
+      Serial.print(" | LL: ");
       Serial.print(luminosidade, 2);
       Serial.println("%");
   }
